@@ -136,10 +136,10 @@ void setup()  {
   Weapon_AG = XPlaneRef("sim/cockpit/weapons/bombs_armed");
   Weapon_AA = XPlaneRef("sim/cockpit/weapons/missiles_armed");
   Audio_Com1 = XPlaneRef("sim/cockpit/radios/com1_freq_hz");
-  Audio_Com1_Monitor = XPlaneRef("sim/audio_panel/monitor_audio_com1");
+  Audio_Com1_Monitor = XPlaneRef("sim/audio_panel/select_audio_com1");
   Audio_Com1_Flip = XPlaneRef("sim/radios/com1_standy_flip");
   Audio_Com2 = XPlaneRef("sim/cockpit/radios/com2_freq_hz");
-  Audio_Com2_Monitor = XPlaneRef("sim/audio_panel/monitor_audio_com2");
+  Audio_Com2_Monitor = XPlaneRef("sim/audio_panel/select_audio_com2");
   Audio_Com2_Flip = XPlaneRef("sim/radios/com2_standy_flip");
   Radio_Nav1 = XPlaneRef("sim/cockpit/radios/nav1_freq_hz");
   Radio_Nav1_Flip = XPlaneRef("sim/radios/nav1_standy_flip");

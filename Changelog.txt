@@ -1,5 +1,12 @@
 Changelog
 
+2014.10.10, ver 0.3.3:
+-Fixed Com1 and Com2 Audio Selector buttons, as they did not work in X-Plane 9.70
+
+2014.10.10, ver 0.3.2:
+-The X-Plane 9 version now has all the code for that is not related to LCD output.
+-Added the Sprint Layout file for the Microcontroller shield that goes on the back of the keypad.
+
 2014.10.10, Documentation update: 
 -Added a new User's Manual that details the planned Character LCD expansion, and all the currently implemented features. 
 -Renamed the current Android source code file to ufcp_ver9.ino to distinguish it from the planned X-Plane 10 version, as the current code only works in X-Plane 9.70
