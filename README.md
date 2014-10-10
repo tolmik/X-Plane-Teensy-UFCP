@@ -8,8 +8,7 @@ program the microcontroller for your specific version of the simulator in order 
 
 Current missing features:
 -Character LCD support
--Command evaulation fro the numerical keypad inputs
--Weapon mode selector.
+
 -VNAV support
 
 
