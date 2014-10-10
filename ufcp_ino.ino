@@ -41,18 +41,6 @@ enum LCD_PINS {
 };
 LiquidCrystalFast lcd(RS, RW, EN, D4, D5, D6, D7);
 
-void setupOutput() {
-  pinMode (RS, OUTPUT);
-  pinMode (RW, OUTPUT);
-  pinMode (EN, OUTPUT);
-  pinMode (D4, OUTPUT);
-  pinMode (D5, OUTPUT);
-  pinMode (D6, OUTPUT);
-  pinMode (D7, OUTPUT);
-  lcd.begin (20, 4);
-  pinMode (LED_BUILTIN, OUTPUT);
-} 
- 
 ///////////////////////////////////////////////////////////////////////////////
 // X-Plane objects we will be needing
 //
@@ -86,13 +74,34 @@ void setupOutput() {
  FlightSimInteger Radio_Nav2;
  FlightSimCommand Radio_Nav2_Flip;
  FlightSimInteger Autopilot;
+ FlightSimInteger Autopilot_Heading;
  FlightSimFloat Bus_Voltage_1A; // Tuboflan Generator A
  FlightSimFloat Bus_Voltage_1B; // Tuboflan Generator B
  FlightSimFloat Bus_Voltage_2; // APU
  FlightSimFloat Bus_Voltage_3; // RAMJet
  FlightSimFloat Bus_Voltage_4; // RAT
 
-void setupDataRefs(){
+///////////////////////////////////////////////////////////////////////////////
+// Program Variables
+//
+ String NumericalCommand = "";
+ byte FlightSimEnabled = 1;
+
+///////////////////////////////////////////////////////////////////////////////
+// We set up the things we will need for the program
+void setup()  {
+  // by keeping crap out of here the setup is nice and modular.
+  // also, by using functions everything is neatly packed together in a convenient place.
+  Serial.begin(115200);  
+  pinMode (RS, OUTPUT);
+  pinMode (RW, OUTPUT);
+  pinMode (EN, OUTPUT);
+  pinMode (D4, OUTPUT);
+  pinMode (D5, OUTPUT);
+  pinMode (D6, OUTPUT);
+  pinMode (D7, OUTPUT);
+  lcd.begin (20, 4);
+  pinMode (LED_BUILTIN, OUTPUT);
   AP_On = XPlaneRef("sim/autopilot/servos_on");
   FD_On = XPlaneRef("sim/autopilot/fdir_on");
   AP_WLV = XPlaneRef("sim/autopilot/wing_leveler");
@@ -123,6 +132,7 @@ void setupDataRefs(){
   Radio_Nav2 = XPlaneRef("sim/cockpit/radios/nav2_freq_hz");
   Radio_Nav2_Flip = XPlaneRef("sim/radios/nav2_standy_flip");
   Autopilot = XPlaneRef("sim/cockpit/autopilot/autopilot_mode");
+  Autopilot_Heading = XPlaneRef("sim/cockpit2/autopilot/heading_dial_deg_mag_pilot");
   Bus_Voltage_1A = XPlaneRef("sim/cockpit2/electrical/bus_volts[0]"); // Tuboflan Generator A
   Bus_Voltage_1B = XPlaneRef("sim/cockpit2/electrical/bus_volts[1]"); // Tuboflan Generator B
   Bus_Voltage_2 = XPlaneRef("sim/cockpit2/electrical/bus_volts[2]"); // APU
@@ -131,36 +141,31 @@ void setupDataRefs(){
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Program Variables
-//
- String NumericalCommand = "";
-
-///////////////////////////////////////////////////////////////////////////////
-// We set up the things we will need for the program
-void setup()  {
-  // by keeping crap out of here the setup is nice and modular.
-  // also, by using functions everything is neatly packed together in a convenient place.
-  Serial.begin(9600);  
-  setupOutput();
-  setupDataRefs();
-}
-
-///////////////////////////////////////////////////////////////////////////////
 // And then we loop. This is the main function that runs
 void loop(){
   ///////////////////////////////////////////////////////////////////////////////
   // The first step in the loop() should be an update for the DataRefs
-  if(FlightSim.isEnabled()) FlightSim.update();
+  if(FlightSim.isEnabled() != FlightSimEnabled){
+    Serial.print("The flight sim is ");
+    FlightSimEnabled = FlightSim.isEnabled();
+    Serial.println(FlightSimEnabled);
+  }
+  FlightSim.update();
   
   char key1 = keypad.getKey();
   if (key1 != NO_KEY){
+//    Serial.println(AP_WLV);
     Serial.print("You pressed: ");
     Serial.println(key1);
     if (key1 != ' ') {
       if(key1 == 'W'){
-        AP_WLV.once();
+        AP_WLV = 1;
+        Serial.println("AP Wing Leveler command");
+        AP_WLV = 0;
       } else if(key1 == 'L'){
-        AP_LOC.once();
+        AP_LOC = 1;
+        Serial.println("AP Localizer command");
+        AP_LOC = 0;
       } else if(key1 == 'G'){
         AP_GS.once();
       } else if(key1 == 'c'){
@@ -199,20 +204,29 @@ void loop(){
         AP_TEST.once();
       } else if(key1 == 'B'){
         //Select AG weapon
-      } else if(key1 == 'M'){
+         Weapon_AG.once();
+      } else if(key1 == 'M'){        
         //Select AA weapon
+         Weapon_AA.once();
       } else {
+        Serial.println(Radio_Nav1);
         if(key1 == '#'){
           NumericalCommand = String("");
+          Serial.print("Numerical command is reset");
         } else if(key1 == '*'){
+          Serial.print("Running command: ");
+          Serial.println(NumericalCommand);
           byte CommandValidation = ParseCommand(NumericalCommand);
           NumericalCommand = String("");
         } else {
           NumericalCommand = String(NumericalCommand + key1);
+          Serial.print("Current command is: ");
+          Serial.println(NumericalCommand);
         }
-        UpdateLCD_Command(NumericalCommand);
+        //UpdateLCD_Command(NumericalCommand);
       }      
     }
+    FlightSim.update();    
     while(key1 != NO_KEY){
       delay(50);
       key1 = keypad.getKey();
@@ -224,24 +238,56 @@ byte ParseCommand(String Command){
   byte CommandValidation = 1;
   if(Command.startsWith("11")) {
     if(Command == "11"){
+      Serial.println("CMD> Flip Nav1 frequencies");
       Radio_Nav1_Flip.once();
-    } else if(Command.length() == 8){
+    } else if(Command.length() == 7){
       Command = Command.substring(2);
       Radio_Nav1 = Command.toInt();
+      Serial.print("CMD> Set Nav1 to ");
+      Serial.println(Command);
     } else {
+      Serial.println("CMD> ERROR");
       CommandValidation = 0;
     }
   } else if(Command.startsWith("12")) {
     if(Command == "12"){
+      Serial.println("CMD> Flip Nav2 frequencies");
       Radio_Nav2_Flip.once();
-    } else if(Command.length() == 8){
+    } else if(Command.length() == 7){
       Command = Command.substring(2);
       Radio_Nav2 = Command.toInt();
+      Serial.print("CMD> Set Nav2 to ");
+      Serial.println(Command);
     } else {
+      Serial.println("CMD> ERROR");
       CommandValidation = 0;
     }
   } else if(Command.startsWith("21")) {
+    if(Command == "21"){
+      Serial.println("CMD> Flip Com1 frequencies");
+      Audio_Com1_Flip.once();
+    } else if(Command.length() == 7){
+      Command = Command.substring(2);
+      Audio_Com1 = Command.toInt();
+      Serial.print("CMD> Set Com1 to ");
+      Serial.println(Command);
+    } else {
+      Serial.println("CMD> ERROR");
+      CommandValidation = 0;
+    }
   } else if(Command.startsWith("22")) {
+    if(Command == "22"){
+      Serial.println("CMD> Flip Com2 frequencies");
+      Audio_Com1_Flip.once();
+    } else if(Command.length() == 7){
+      Command = Command.substring(2);
+      Audio_Com2 = Command.toInt();
+      Serial.print("CMD> Set Com2 to ");
+      Serial.println(Command);
+    } else {
+      Serial.println("CMD> ERROR");
+      CommandValidation = 0;
+    }
   } else if(Command.startsWith("31")) {
   } else if(Command.startsWith("32")) {
   } else if(Command.startsWith("4")) {
