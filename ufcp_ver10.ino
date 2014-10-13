@@ -4,7 +4,6 @@
  *
  * You may freely distribute or modify this code for non-commercial open-source applications while mentioning the sources 
  */
-#include <LiquidCrystalFast.h>
 #include <Keypad.h>
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -27,20 +26,6 @@
  byte colPins[COLS] = {17,15,14,13,12,11,9};
  Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
  
-///////////////////
-// Output hardware
-//
-enum LCD_PINS {
-  RS = 39,
-  RW,
-  EN, // these are automatically numbered from 39 to 45
-  D4, // thanks to the magic of enum
-  D5,
-  D6,
-  D7 // = 45
-};
-LiquidCrystalFast lcd(RS, RW, EN, D4, D5, D6, D7);
-
 ///////////////////////////////////////////////////////////////////////////////
 // X-Plane objects we will be needing
 //
@@ -61,6 +46,7 @@ LiquidCrystalFast lcd(RS, RW, EN, D4, D5, D6, D7);
  FlightSimCommand AP_NAV2;
  FlightSimCommand AP_GPS;
  FlightSimCommand AP_BC;
+ FlightSimCommand Weapon_Arm;
  FlightSimInteger Weapon_Guns;
  FlightSimInteger Weapon_AG;
  FlightSimInteger Weapon_AA;
@@ -104,16 +90,6 @@ LiquidCrystalFast lcd(RS, RW, EN, D4, D5, D6, D7);
 ///////////////////////////////////////////////////////////////////////////////
 // We set up the things we will need for the program
 void setup()  {
-  // by keeping crap out of here the setup is nice and modular.
-  // also, by using functions everything is neatly packed together in a convenient place.
-  pinMode (RS, OUTPUT);
-  pinMode (RW, OUTPUT);
-  pinMode (EN, OUTPUT);
-  pinMode (D4, OUTPUT);
-  pinMode (D5, OUTPUT);
-  pinMode (D6, OUTPUT);
-  pinMode (D7, OUTPUT);
-  lcd.begin (20, 4);
   pinMode (LED_BUILTIN, OUTPUT);
   AP_On = XPlaneRef("sim/autopilot/servos_on");
   FD_On = XPlaneRef("sim/autopilot/fdir_on");
@@ -132,6 +108,7 @@ void setup()  {
   AP_NAV2 = XPlaneRef("sim/autopilot/hsi_select_nav_2");
   AP_GPS = XPlaneRef("sim/autopilot/hsi_select_gps");
   AP_BC = XPlaneRef("sim/autopilot/back_course");
+  Weapon_Arm = XPlaneRef("sim/weapons/master_arm_on");
   Weapon_Guns = XPlaneRef("sim/cockpit/weapons/guns_armed");
   Weapon_AG = XPlaneRef("sim/cockpit/weapons/bombs_armed");
   Weapon_AA = XPlaneRef("sim/cockpit/weapons/missiles_armed");
@@ -238,10 +215,14 @@ void loop(){
         AP_TEST = 1;
         AP_TEST = 0;
       } else if(key1 == 'B'){
+         Weapon_Arm = 1;
+         Weapon_Arm = 0;        
          Weapon_Guns = 0;
          Weapon_AA = 0;
          Weapon_AG = 1;
-      } else if(key1 == 'M'){        
+      } else if(key1 == 'M'){
+         Weapon_Arm = 1;
+         Weapon_Arm = 0;        
          Weapon_Guns = 0;
          Weapon_AG = 0;
          Weapon_AA = 1;
@@ -254,7 +235,6 @@ void loop(){
         } else {
           NumericalCommand = String(NumericalCommand + key1);
         }
-        //UpdateLCD_Command(NumericalCommand, CommandValidation);
       }      
     }
     FlightSim.update();    
@@ -386,35 +366,5 @@ byte ParseCommand(String Command){
     CommandValidation = 0;
   }
   return CommandValidation;
-}
-
-void SetupLCD_Screen(){
-  lcd.setCursor(0, 0);
-  lcd.print("CMD> _");
-  lcd.setCursor(0, 2);
-  lcd.print("HDG");
-  lcd.setCursor(0, 3);
-  lcd.print("SPD");
-  lcd.setCursor(16, 2);
-  lcd.print("ALT");
-  lcd.setCursor(16, 3);
-  lcd.print("VVI");  
-}
-
-void UpdateLCD_Command(String Command, byte Validation){
-  if(Validation == 0){
-  }else if(Command.startsWith("1")) {
-  } else if(Command.startsWith("2")) {
-  } else if(Command.startsWith("3")) {
-  } else if(Command.startsWith("4")) {
-  } else if(Command.startsWith("5")) {
-  } else if(Command.startsWith("6")) {
-  } else if(Command.startsWith("7")) {
-  } else if(Command.startsWith("8")) {
-  } else if(Command.startsWith("9")) {
-  } else if(Command.startsWith("0")) {
-  } else {
-    
-  }
 }
 
