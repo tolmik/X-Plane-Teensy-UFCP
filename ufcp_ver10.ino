@@ -86,10 +86,12 @@
 //
  String NumericalCommand = "";
  byte FlightSimEnabled = 1;
+ byte CommandValidation = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 // We set up the things we will need for the program
 void setup()  {
+  Serial.begin(9600);
   pinMode (LED_BUILTIN, OUTPUT);
   AP_On = XPlaneRef("sim/autopilot/servos_on");
   FD_On = XPlaneRef("sim/autopilot/fdir_on");
@@ -153,217 +155,169 @@ void loop(){
     FlightSimEnabled = FlightSim.isEnabled();
   }
   FlightSim.update();
-  
   char key1 = keypad.getKey();
-  if (key1 != NO_KEY){
-    if (key1 != ' ') {
-      if(key1 == 'W'){
-        AP_WLV = 1;
-        AP_WLV = 0;
-      } else if(key1 == 'L'){
-        AP_LOC = 1;
-        AP_LOC = 0;
-      } else if(key1 == 'G'){
-        AP_GS = 1;
-        AP_GS = 0;
-      } else if(key1 == 'c'){
-        Audio_Com1_Monitor = 1;
-        Audio_Com1_Monitor = 0;
-      } else if(key1 == 'C'){
-        Audio_Com2_Monitor = 1;
-        Audio_Com2_Monitor = 0;
-      } else if(key1 == 'S'){
-        AP_SPD = 1;
-        AP_SPD = 0;
-      } else if(key1 == 'I'){
-        AP_IAS = 1;
-        AP_IAS = 0;
-      } else if(key1 == 'g'){
-        AP_GPS = 1;
-        AP_GPS = 0;
-      } else if(key1 == 'b'){
-        AP_BC = 1;
-        AP_BC = 0;
-      } else if(key1 == 'V'){
-        AP_VVI = 1;
-        AP_VVI = 0;
-      } else if(key1 == 'F'){
-        AP_FLCH = 1;
-        AP_FLCH = 0;
-      } else if(key1 == 'N'){
-        AP_NAV2 = 1;
-        AP_NAV2 = 0;
-      } else if(key1 == 'A'){
-        AP_ALT = 1;
-        AP_ALT = 0;
-      } else if(key1 == 'Y'){
-        AP_SYNC = 1;
-        AP_SYNC = 0;
-      } else if(key1 == 'n'){
-        AP_NAV1 = 1;
-        AP_NAV1 = 0;
-      } else if(key1 == 'P'){
+  if (key1 != NO_KEY){   
+    switch(byte(key1)){
+      case 35: //RCL
+        NumericalCommand = String("");
+        break;
+      case 42: //ENTR
+        CommandValidation = ParseCommand(NumericalCommand);
+        NumericalCommand = String("");
+        break;
+      case 48 ... 57: //0-9
+        NumericalCommand = String(NumericalCommand + key1);      
+        break;  
+      case 65: //ALT
+        AP_ALT.once();
+        break;
+      case 66: //AG
+        Weapon_Arm.once();
+        Weapon_AG = 1;        
+        break;  
+      case 67: //Com2
+        Audio_Com2_Monitor.once();
+        break;
+      case 70: //FLCH
+        AP_FLCH.once();
+        break;  
+      case 71: //GS
+        AP_GS.once();
+        break;
+      case 72: //HDG
+        AP_HDG.once();  
+      case 73: //IAS  
+        AP_IAS.once();
+        break;
+      case 76: //LOC
+        AP_LOC.once();
+        break;
+      case 77: //AA
+        Weapon_Arm.once();
+        Weapon_AA = 1;      
+      case 78: //NAV2
+        AP_NAV2.once();
+        break;
+      case 80: //FD
         if(Autopilot != 1){
           Autopilot = 1;
         } else {
           Autopilot = 2;
         }
-      } else if(key1 == 'H'){
-        AP_HDG = 1;
-        AP_HDG = 0;
-      } else if(key1 == 'T'){
-        AP_TEST = 1;
-        AP_TEST = 0;
-      } else if(key1 == 'B'){
-         Weapon_Arm = 1;
-         Weapon_Arm = 0;        
-         Weapon_Guns = 0;
-         Weapon_AA = 0;
-         Weapon_AG = 1;
-      } else if(key1 == 'M'){
-         Weapon_Arm = 1;
-         Weapon_Arm = 0;        
-         Weapon_Guns = 0;
-         Weapon_AG = 0;
-         Weapon_AA = 1;
-      } else {
-        if(key1 == '#'){
-          NumericalCommand = String("");
-        } else if(key1 == '*'){
-          byte CommandValidation = ParseCommand(NumericalCommand);
-          NumericalCommand = String("");
-        } else {
-          NumericalCommand = String(NumericalCommand + key1);
-        }
-      }      
+        break;
+      case 83: //SPD
+        AP_SPD.once();
+        break;
+      case 84: //TEST
+        AP_TEST.once();
+        break;  
+      case 86: //VVI
+        AP_VVI.once();
+        break;
+      case 87: //WLW
+        AP_WLV.once();
+        break;
+      case 89: //SYNC
+        AP_SYNC.once();
+        break;
+      case 98: //BC
+        AP_BC.once();
+        break;
+      case 99: //Com1  
+        Audio_Com1_Monitor.once();
+        break;
+      case 103: //GPS  
+        AP_GPS.once();
+        break;
+      case 110: //NAV1
+        AP_NAV1.once();
+        break;  
     }
     FlightSim.update();    
     while(key1 != NO_KEY){
       delay(50);
       key1 = keypad.getKey();
-    }
+    }    
   }
 }
 
 byte ParseCommand(String Command){
   byte CommandValidation = 1;
-  if(Command.startsWith("11")) {
-    if(Command == "11"){
-      Radio_Nav1_Flip.once();
-    } else if(Command.length() == 7){
-      Command = Command.substring(2);
-      Radio_Nav1 = Command.toInt();
-    } else {
-      CommandValidation = 0;
-    }
-  } else if(Command.startsWith("12")) {
-    if(Command == "12"){
-      Radio_Nav2_Flip.once();
-    } else if(Command.length() == 7){
-      Command = Command.substring(2);
-      Radio_Nav2 = Command.toInt();
-    } else {
-      CommandValidation = 0;
-    }
-  } else if(Command.startsWith("21")) {
-    if(Command == "21"){
-      Audio_Com1_Flip.once();
-    } else if(Command.length() == 7){
-      Command = Command.substring(2);
-      Audio_Com1 = Command.toInt();
-    } else {
-      CommandValidation = 0;
-    }
-  } else if(Command.startsWith("22")) {
-    if(Command == "22"){
-      Audio_Com1_Flip.once();
-    } else if(Command.length() == 7){
-      Command = Command.substring(2);
-      Audio_Com2 = Command.toInt();
-    } else {
-      CommandValidation = 0;
-    }
-  } else if(Command.startsWith("31")) {
-    if(Command == "31"){
-      Radio_Adf1_Flip.once();
-    } else if(Command.length() == 5){
-      Command = Command.substring(2);
-      Radio_Adf1 = Command.toInt();
-    } else {
-      CommandValidation = 0;
-    }
-  } else if(Command.startsWith("32")) {
-    if(Command == "32"){
-      Radio_Adf2_Flip.once();
-    } else if(Command.length() == 5){
-      Command = Command.substring(2);
-      Radio_Adf2 = Command.toInt();
-    } else {
-      CommandValidation = 0;
-    }
-  } else if(Command.startsWith("4")) {
-    if(Command.length() == 4){
-      Command = Command.substring(1);
-      Autopilot_Heading = Command.toInt();
-    } else {
-      CommandValidation = 0;
-    }
-  } else if(Command.startsWith("5")) {
-    if(Command.length() == 4){
-      Command = Command.substring(1);
-      Autopilot_Speed = Command.toInt();
-    } else {
-      CommandValidation = 0;
-    }
-  } else if(Command.startsWith("6")) {
-    if(Command == "6"){
-      Command = Command.substring(1);
-      Barometer = 29.92;      
-    } else if(Command.length() == 5){
-      Command = Command.substring(1);
-      Barometer = float(Command.toInt()) / 100;            
-    } else {
-      CommandValidation = 0;
-    }
-  } else if(Command.startsWith("7")) {
-    if(Command.length() == 4){
-      Command = Command.substring(1);
-      Autopilot_Altitude = ( Command.toInt() * 100 );
-    } else {
-      CommandValidation = 0;
-    }
-  } else if(Command == "8") {
-    Autopilot_terrain.once();
-  } else if(Command.startsWith("9")) {
-    if(Command.length() == 4){
-      if(Command.startsWith("90")){
-        Command = Command.substring(2);
-        Autopilot_VVI = -100 * Command.toInt();
-      } else if(Command.startsWith("91")) {
-        Command = Command.substring(2);
-        Autopilot_VVI = 100 * Command.toInt();
-      } else {
-        CommandValidation = 0;
-      }
-    } else {
-      CommandValidation = 0;
-    }
-  } else if(Command.startsWith("0")) {
-    if(Command.length() == 4){
-      Command = Command.substring(1);
-      Autopilot_DH = Command.toInt();
-    } else {
-      CommandValidation = 0;
-    }
-  } else if(Command.startsWith("R")) { //Map zoom change
+  if(Command.startsWith("R")) { //Map zoom change
     if(Command.length() == 2){
-      Command = Command.substring(1);
-      Radar_range = Command.toInt();
+      Radar_range = Command.substring(1).toInt();
     } else {
       CommandValidation = 0;
     }
   } else {
-    CommandValidation = 0;
+    switch(Command.toInt()){
+      case 6:
+        Barometer = 29.92;
+        break;
+      case 8:
+        Autopilot_terrain.once();
+        break;  
+      case 11:
+        Radio_Nav1_Flip.once();
+        break;
+      case 12:
+        Radio_Nav2_Flip.once();
+        break;
+      case 21:
+        Audio_Com1_Flip.once();
+        break;
+      case 22:
+        Audio_Com1_Flip.once();
+        break;
+      case 31:
+        Radio_Adf1_Flip.once();
+        break;
+      case 32:
+        Radio_Adf2_Flip.once();
+        break;
+      case 50 ... 999:
+        Autopilot_DH = Command.substring(1).toInt();
+        break;      
+      case 4001 ... 4360:
+        Autopilot_Heading = Command.substring(1).toInt();
+        break;
+      case 5000 ... 5600:
+        Autopilot_Speed = Command.substring(1).toInt();
+        break;
+      case 7000 ... 7999:
+        Autopilot_Altitude = ( Command.substring(1).toInt() * 100 );
+        break;
+      case 9001 ... 9099:
+        Autopilot_VVI = -100 * Command.substring(2).toInt();
+        break;
+      case 9100 ... 9199:
+        Autopilot_VVI = 100 * Command.substring(2).toInt();
+        break;      
+      case 31000 ... 31999:
+        Radio_Adf1 = Command.substring(2).toInt();
+        break;
+      case 32000 ... 32999:
+        Radio_Adf2 = Command.substring(2).toInt();
+        break;
+      case 62500 ... 63099:
+        Barometer = float(Command.substring(1).toInt()) / 100;            
+        break;
+      case 1110000 ... 1113999:
+        Radio_Nav1 = Command.substring(2).toInt();
+        break;
+      case 1210000 ... 1213999:  
+        Command = Command.substring(2);
+        Radio_Nav2 = Command.toInt();
+        break;
+      case 2110000 ... 2113999: 
+        Audio_Com1 = Command.substring(2).toInt();
+        break;
+      case 2210000 ... 2213999: 
+        Audio_Com2 = Command.substring(2).toInt();
+        break;
+      default:
+        CommandValidation = 0;
+    }
   }
   return CommandValidation;
 }
