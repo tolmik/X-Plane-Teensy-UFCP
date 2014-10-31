@@ -64,6 +64,7 @@
  FlightSimCommand Radio_Adf1_Flip;
  FlightSimInteger Radio_Adf2;
  FlightSimCommand Radio_Adf2_Flip;
+ FlightSimInteger Radio_XPNDR;
  FlightSimInteger Autopilot;
  FlightSimFloat Autopilot_Heading;
  FlightSimFloat Autopilot_Altitude;
@@ -128,6 +129,7 @@ void setup()  {
   Radio_Adf1_Flip = XPlaneRef("sim/radios/adf1_standy_flip");
   Radio_Adf2 = XPlaneRef("sim/cockpit/radios/adf2_freq_hz");
   Radio_Adf2_Flip = XPlaneRef("sim/radios/adf2_standy_flip");
+  Radio_XPNDR = XPlaneRef("sim/cockpit/radios/transponder_code");
   Autopilot = XPlaneRef("sim/cockpit/autopilot/autopilot_mode");
   Autopilot_Heading = XPlaneRef("sim/cockpit/autopilot/heading_mag");
   Autopilot_Altitude = XPlaneRef("sim/cockpit/autopilot/altitude");
@@ -155,6 +157,7 @@ void loop(){
     FlightSimEnabled = FlightSim.isEnabled();
   }
   FlightSim.update();
+  //Serial.println(Radar_range);
   char key1 = keypad.getKey();
   if (key1 != NO_KEY){   
     switch(byte(key1)){
@@ -205,6 +208,9 @@ void loop(){
           Autopilot = 2;
         }
         break;
+      case 82: //R 
+        NumericalCommand = String(NumericalCommand + key1);      
+        break;          
       case 83: //SPD
         AP_SPD.once();
         break;
@@ -233,6 +239,7 @@ void loop(){
         AP_NAV1.once();
         break;  
     }
+//    R
     FlightSim.update();    
     while(key1 != NO_KEY){
       delay(50);
@@ -246,6 +253,8 @@ byte ParseCommand(String Command){
   if(Command.startsWith("R")) { //Map zoom change
     if(Command.length() == 2){
       Radar_range = Command.substring(1).toInt();
+    } else if(Command.length() == 5){
+      Radio_XPNDR = Command.substring(1).toInt();
     } else {
       CommandValidation = 0;
     }
